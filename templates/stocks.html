@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinGPT Việt Nam - Danh sách cổ phiếu</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-graph-up-arrow"></i> FinGPT Việt Nam
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Trang chủ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/stocks">Cổ phiếu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/sentiment">Phân tích Sentiment</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">Giới thiệu</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Danh sách cổ phiếu VN30</h5>
+                        <span class="badge bg-light text-dark">Cập nhật: {{ now().strftime('%H:%M:%S %d/%m/%Y') }}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="stocksSearch" placeholder="Tìm kiếm cổ phiếu...">
+                                    <button class="btn btn-primary" type="button">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="stocks-filter">
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-primary active" data-filter="all">Tất cả</button>
+                                        <button type="button" class="btn btn-outline-primary" data-filter="banking">Ngân hàng</button>
+                                        <button type="button" class="btn btn-outline-primary" data-filter="real-estate">Bất động sản</button>
+                                        <button type="button" class="btn btn-outline-primary" data-filter="manufacturing">Sản xuất</button>
+                                        <button type="button" class="btn btn-outline-primary" data-filter="retail">Bán lẻ</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover stocks-table" id="stocksTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Mã CK</th>
+                                        <th>Tên công ty</th>
+                                        <th>Sàn</th>
+                                        <th>Ngành</th>
+                                        <th>Giá hiện tại</th>
+                                        <th>Thay đổi</th>
+                                        <th>Sentiment</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for company in companies %}
+                                    <tr data-industry="{{ company.industry|lower|replace(' ', '-') }}">
+                                        <td><a href="/stocks/{{ company.symbol }}" class="fw-bold">{{ company.symbol }}</a></td>
+                                        <td>{{ company.name }}</td>
+                                        <td>{{ company.exchange }}</td>
+                                        <td>{{ company.industry }}</td>
+                                        <td class="text-end">
+                                            {% set price = 50000 + loop.index0 * 1000 %}
+                                            {{ "{:,}".format(price) }}
+                                        </td>
+                                        <td class="text-end">
+                                            {% set change = (loop.index0 % 3 - 1) * 500 %}
+                                            {% set change_percent = (change / price * 100)|round(2) %}
+                                            {% if change > 0 %}
+                                                <span class="positive">+{{ "{:,}".format(change) }} (+{{ change_percent }}%)</span>
+                                            {% elif change < 0 %}
+                                                <span class="negative">{{ "{:,}".format(change) }} ({{ change_percent }}%)</span>
+                                            {% else %}
+                                                <span>0 (0.00%)</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% set sentiment_index = loop.index0 % 3 %}
+                                            {% if sentiment_index == 0 %}
+                                                <span class="badge bg-success">Tích cực</span>
+                                            {% elif sentiment_index == 1 %}
+                                                <span class="badge bg-warning text-dark">Trung tính</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Tiêu cực</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Thông tin về VN30</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Giới thiệu về VN30</h6>
+                                <p>VN30 là chỉ số chứng khoán bao gồm 30 cổ phiếu có giá trị vốn hóa lớn nhất và thanh khoản cao nhất trên Sở Giao dịch Chứng khoán Thành phố Hồ Chí Minh (HOSE).</p>
+                                <p>Chỉ số VN30 được xem là đại diện cho xu hướng của thị trường chứng khoán Việt Nam và là cơ sở cho các sản phẩm phái sinh như hợp đồng tương lai chỉ số VN30.</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Tiêu chí lựa chọn cổ phiếu VN30</h6>
+                                <ul>
+                                    <li>Giá trị vốn hóa thị trường lớn</li>
+                                    <li>Thanh khoản cao</li>
+                                    <li>Tỷ lệ cổ phiếu tự do chuyển nhượng (free-float) cao</li>
+                                    <li>Đáp ứng các tiêu chí về tình hình tài chính và quản trị doanh nghiệp</li>
+                                </ul>
+                                <p>Danh sách cổ phiếu VN30 được xem xét và điều chỉnh định kỳ 6 tháng một lần vào tháng 1 và tháng 7 hàng năm.</p>
+                            </div>
+                        </div>
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            <strong>Lưu ý:</strong> Dữ liệu cổ phiếu được cập nhật từ CafeF và SSI iBoard. Vui lòng tham khảo các nguồn chính thức để có thông tin mới nhất và chính xác nhất.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>FinGPT Việt Nam</h5>
+                    <p>Công cụ phân tích sentiment cổ phiếu Việt Nam sử dụng trí tuệ nhân tạo</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Liên kết</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/" class="text-white">Trang chủ</a></li>
+                        <li><a href="/stocks" class="text-white">Cổ phiếu</a></li>
+                        <li><a href="/sentiment" class="text-white">Phân tích Sentiment</a></li>
+                        <li><a href="/about" class="text-white">Giới thiệu</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Nguồn dữ liệu</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="https://cafef.vn" class="text-white" target="_blank">CafeF</a></li>
+                        <li><a href="https://iboard.ssi.com.vn" class="text-white" target="_blank">SSI iBoard</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p class="mb-0">&copy; 2025 FinGPT Việt Nam. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinGPT Việt Nam - Phân tích Sentiment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-graph-up-arrow"></i> FinGPT Việt Nam
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Trang chủ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/stocks">Cổ phiếu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/sentiment">Phân tích Sentiment</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">Giới thiệu</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Phân tích Sentiment Cổ phiếu Việt Nam</h5>
+                        <span class="badge bg-light text-dark">Cập nhật: {{ now().strftime('%H:%M:%S %d/%m/%Y') }}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    <strong>Phân tích Sentiment</strong> là quá trình phân tích cảm xúc và quan điểm trong tin tức và thông tin về cổ phiếu để đánh giá mức độ tích cực, tiêu cực hoặc trung tính.
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="sentiment-filter">
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control" id="sentimentSearch" placeholder="Tìm kiếm cổ phiếu...">
+                                        <button class="btn btn-primary" type="button">
+                                            <i class="bi bi-search"></i>
+                                        </button>
+                                    </div>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-primary active" data-filter="all">Tất cả</button>
+                                        <button type="button" class="btn btn-outline-success" data-filter="positive">Tích cực</button>
+                                        <button type="button" class="btn btn-outline-warning" data-filter="neutral">Trung tính</button>
+                                        <button type="button" class="btn btn-outline-danger" data-filter="negative">Tiêu cực</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover sentiment-table" id="sentimentTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Mã CK</th>
+                                        <th>Tên công ty</th>
+                                        <th>Sentiment</th>
+                                        <th>Điểm</th>
+                                        <th>Số tin tức</th>
+                                        <th>Tỷ lệ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for stock in stock_sentiments %}
+                                    <tr data-sentiment="{{ stock.sentiment }}">
+                                        <td><a href="/stocks/{{ stock.symbol }}" class="fw-bold">{{ stock.symbol }}</a></td>
+                                        <td>{{ stock.name }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if stock.sentiment == 'positive' %}
+                                                    bg-success
+                                                {% elif stock.sentiment == 'negative' %}
+                                                    bg-danger
+                                                {% else %}
+                                                    bg-warning text-dark
+                                                {% endif %}">
+                                                {% if stock.sentiment == 'positive' %}
+                                                    Tích cực
+                                                {% elif stock.sentiment == 'negative' %}
+                                                    Tiêu cực
+                                                {% else %}
+                                                    Trung tính
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                        <td>{{ stock.score|round(2) }}</td>
+                                        <td>{{ stock.news_count }}</td>
+                                        <td>
+                                            <div class="sentiment-score" data-score="{{ stock.score }}">
+                                                <div class="sentiment-score-bar"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Phương pháp phân tích Sentiment</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Quy trình phân tích</h6>
+                                <ol>
+                                    <li>Thu thập tin tức và thông tin về cổ phiếu từ các nguồn đáng tin cậy (CafeF, SSI)</li>
+                                    <li>Sử dụng AI (Gemini API) để phân tích nội dung và xác định sentiment</li>
+                                    <li>Đánh giá mức độ tích cực, tiêu cực hoặc trung tính của mỗi tin tức</li>
+                                    <li>Tính toán điểm sentiment tổng thể cho mỗi cổ phiếu</li>
+                                    <li>Cập nhật liên tục khi có tin tức mới</li>
+                                </ol>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Thang điểm Sentiment</h6>
+                                <ul class="list-group">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Tích cực cao
+                                        <span class="badge bg-success rounded-pill">0.7 đến 1.0</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Tích cực
+                                        <span class="badge bg-success rounded-pill">0.2 đến 0.7</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Trung tính
+                                        <span class="badge bg-warning text-dark rounded-pill">-0.2 đến 0.2</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Tiêu cực
+                                        <span class="badge bg-danger rounded-pill">-0.7 đến -0.2</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Tiêu cực cao
+                                        <span class="badge bg-danger rounded-pill">-1.0 đến -0.7</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="alert alert-warning mt-4">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <strong>Lưu ý:</strong> Phân tích sentiment chỉ là một trong nhiều yếu tố cần xem xét khi đầu tư. Vui lòng kết hợp với phân tích cơ bản, phân tích kỹ thuật và các yếu tố khác trước khi đưa ra quyết định đầu tư.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>FinGPT Việt Nam</h5>
+                    <p>Công cụ phân tích sentiment cổ phiếu Việt Nam sử dụng trí tuệ nhân tạo</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Liên kết</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/" class="text-white">Trang chủ</a></li>
+                        <li><a href="/stocks" class="text-white">Cổ phiếu</a></li>
+                        <li><a href="/sentiment" class="text-white">Phân tích Sentiment</a></li>
+                        <li><a href="/about" class="text-white">Giới thiệu</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Nguồn dữ liệu</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="https://cafef.vn" class="text-white" target="_blank">CafeF</a></li>
+                        <li><a href="https://iboard.ssi.com.vn" class="text-white" target="_blank">SSI iBoard</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p class="mb-0">&copy; 2025 FinGPT Việt Nam. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

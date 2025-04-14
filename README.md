@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FinGPT Việt Nam
 
-## Getting Started
+FinGPT Việt Nam là một ứng dụng phân tích sentiment (tình cảm) cho cổ phiếu Việt Nam, sử dụng dữ liệu từ nhiều nguồn khác nhau và phân tích bằng trí tuệ nhân tạo.
 
-First, run the development server:
+## Tính năng chính
+
+- **Phân tích sentiment cổ phiếu VN**: Sử dụng Gemini API để phân tích tin tức và đánh giá mức độ tích cực/tiêu cực
+- **Dữ liệu đa nguồn**: Thu thập dữ liệu từ CafeF, SSI iBoard và Yahoo Finance
+- **Giao diện trực quan**: Thiết kế responsive với biểu đồ và bảng dữ liệu dễ đọc
+- **Tìm kiếm và lọc**: Tìm kiếm cổ phiếu và lọc theo ngành, loại sentiment
+- **Phân tích thị trường**: Đánh giá xu hướng tổng thể của thị trường dựa trên phân tích sentiment
+
+## Cài đặt
+
+### Yêu cầu
+
+- Python 3.8+
+- Flask
+- Pandas
+- Requests
+- BeautifulSoup4
+- Google Generative AI (cho Gemini API)
+
+### Cài đặt thư viện
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pip install -r requirements.txt
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Cấu hình
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Chỉnh sửa file `src/config.py` để cấu hình:
+- API key cho Gemini
+- Đường dẫn lưu trữ dữ liệu
+- Cổng và host cho ứng dụng web
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Sử dụng
 
-## Learn More
+### Chạy ứng dụng
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+python app.py
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Sau đó truy cập ứng dụng tại: http://localhost:5000
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Thu thập dữ liệu
 
-## Deploy on Vercel
+```bash
+python -c "from src.data_collector import collect_all_vn30_data; collect_all_vn30_data()"
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Phân tích sentiment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+python -c "from src.sentiment_analyzer import analyze_news_data; analyze_news_data()"
+```
+
+## Cấu trúc dự án
+
+```
+fingpt_vietnam/
+├── app.py                  # Ứng dụng Flask chính
+├── data/                   # Thư mục chứa dữ liệu
+│   ├── cafef/              # Dữ liệu từ CafeF
+│   ├── ssi/                # Dữ liệu từ SSI iBoard
+│   ├── yahoo/              # Dữ liệu từ Yahoo Finance
+│   ├── sample_company_info.csv
+│   ├── sample_historical_data.csv
+│   ├── sample_news_data.csv
+│   └── sentiment_results.csv
+├── src/                    # Mã nguồn
+│   ├── config.py           # Cấu hình
+│   ├── data_collector.py   # Thu thập dữ liệu
+│   └── sentiment_analyzer.py # Phân tích sentiment
+├── static/                 # Tài nguyên tĩnh
+│   ├── css/                # CSS
+│   └── js/                 # JavaScript
+└── templates/              # Templates HTML
+    ├── about.html
+    ├── index.html
+    ├── sentiment.html
+    ├── stock_detail.html
+    └── stocks.html
+```
+
+## API
+
+### API thu thập dữ liệu
+
+```
+POST /api/collect_data
+```
+
+### API phân tích sentiment
+
+```
+POST /api/analyze_sentiment
+```
+
+### API lấy dữ liệu cổ phiếu
+
+```
+GET /api/stock_data/<symbol>
+```
+
+### API lấy dữ liệu sentiment
+
+```
+GET /api/sentiment_data/<symbol>
+```
+
+## Nguồn dữ liệu
+
+- [CafeF](https://cafef.vn)
+- [SSI iBoard](https://iboard.ssi.com.vn)
+- [Yahoo Finance](https://finance.yahoo.com)
+
+## Giấy phép
+
+Dự án này được phân phối dưới giấy phép MIT.

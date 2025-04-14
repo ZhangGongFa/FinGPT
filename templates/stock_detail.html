@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinGPT Việt Nam - Chi tiết cổ phiếu</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-graph-up-arrow"></i> FinGPT Việt Nam
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Trang chủ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/stocks">Cổ phiếu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/sentiment">Phân tích Sentiment</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about">Giới thiệu</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">{{ company.symbol }} - {{ company.name }}</h5>
+                        <span class="badge bg-light text-dark">{{ company.exchange }}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="stock-header">
+                            <div>
+                                <span class="stock-price">
+                                    {% if historical_data %}
+                                        {{ historical_data[-1].close|int }}
+                                    {% else %}
+                                        50,000
+                                    {% endif %}
+                                </span>
+                                {% if historical_data and historical_data|length > 1 %}
+                                    {% set change = historical_data[-1].close - historical_data[-2].close %}
+                                    {% set change_percent = (change / historical_data[-2].close * 100)|round(2) %}
+                                    {% if change > 0 %}
+                                        <span class="stock-change positive">+{{ change|int }} (+{{ change_percent }}%)</span>
+                                    {% elif change < 0 %}
+                                        <span class="stock-change negative">{{ change|int }} ({{ change_percent }}%)</span>
+                                    {% else %}
+                                        <span class="stock-change">0 (0.00%)</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="stock-change positive">+500 (+1.01%)</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="stock-details mb-4">
+                            <div class="detail-item">
+                                <div class="detail-label">Giá mở cửa</div>
+                                <div class="detail-value">
+                                    {% if historical_data %}
+                                        {{ historical_data[-1].open|int }}
+                                    {% else %}
+                                        49,500
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Giá cao nhất</div>
+                                <div class="detail-value">
+                                    {% if historical_data %}
+                                        {{ historical_data[-1].high|int }}
+                                    {% else %}
+                                        50,500
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Giá thấp nhất</div>
+                                <div class="detail-value">
+                                    {% if historical_data %}
+                                        {{ historical_data[-1].low|int }}
+                                    {% else %}
+                                        49,000
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Khối lượng</div>
+                                <div class="detail-value">
+                                    {% if historical_data %}
+                                        {{ "{:,}".format(historical_data[-1].volume|int) }}
+                                    {% else %}
+                                        500,000
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="market-chart mb-4">
+                            <canvas id="stockDetailChart"></canvas>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h6 class="card-title mb-0">Thông tin công ty</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Tên công ty:</strong> {{ company.name }}</p>
+                                        <p><strong>Mã cổ phiếu:</strong> {{ company.symbol }}</p>
+                                        <p><strong>Sàn giao dịch:</strong> {{ company.exchange }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Ngành:</strong> {{ company.industry }}</p>
+                                        <p><strong>Website:</strong> <a href="{{ company.website }}" target="_blank">{{ company.website }}</a></p>
+                                        <p><strong>Năm thành lập:</strong> {{ company.established_year }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Tin tức về {{ company.symbol }}</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            {% for item in news %}
+                            <li class="list-group-item">
+                                <a href="{{ item.link }}" class="news-item" target="_blank">
+                                    <div class="news-title">{{ item.title }}</div>
+                                    <div class="news-meta">
+                                        <span class="news-date">{{ item.date }}</span>
+                                        <span class="news-source">{{ item.source }}</span>
+                                    </div>
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Phân tích Sentiment</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="sentiment-chart mb-3">
+                            <canvas id="stockSentimentChart"></canvas>
+                        </div>
+                        <div class="sentiment-summary">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Tích cực:</span>
+                                <span class="fw-bold text-success">{{ (sentiment.positive_ratio * 100)|round|int }}%</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Trung tính:</span>
+                                <span class="fw-bold text-warning">{{ (sentiment.neutral_ratio * 100)|round|int }}%</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span>Tiêu cực:</span>
+                                <span class="fw-bold text-danger">{{ (sentiment.negative_ratio * 100)|round|int }}%</span>
+                            </div>
+                            <div class="alert 
+                                {% if sentiment.sentiment_status == 'positive' %}
+                                    alert-success
+                                {% elif sentiment.sentiment_status == 'negative' %}
+                                    alert-danger
+                                {% else %}
+                                    alert-warning
+                                {% endif %}">
+                                <i class="bi 
+                                    {% if sentiment.sentiment_status == 'positive' %}
+                                        bi-emoji-smile-fill
+                                    {% elif sentiment.sentiment_status == 'negative' %}
+                                        bi-emoji-frown-fill
+                                    {% else %}
+                                        bi-emoji-neutral-fill
+                                    {% endif %} me-2"></i>
+                                <strong>Đánh giá tổng thể:</strong> 
+                                {% if sentiment.sentiment_status == 'positive' %}
+                                    Tích cực
+                                {% elif sentiment.sentiment_status == 'negative' %}
+                                    Tiêu cực
+                                {% else %}
+                                    Trung tính
+                                {% endif %}
+                                (Điểm: {{ sentiment.avg_score|round(2) }})
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="sentiment-stats">
+                            <p><strong>Tổng số tin tức phân tích:</strong> {{ sentiment.total_news }}</p>
+                            <p><strong>Tin tức tích cực:</strong> {{ sentiment.positive_news }}</p>
+                            <p><strong>Tin tức trung tính:</strong> {{ sentiment.neutral_news }}</p>
+                            <p><strong>Tin tức tiêu cực:</strong> {{ sentiment.negative_news }}</p>
+                            <p class="text-muted small">Cập nhật: {{ sentiment.latest_update }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Cổ phiếu liên quan</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {% for symbol in ['VNM', 'VIC', 'VCB', 'FPT', 'MWG'] if symbol != company.symbol %}
+                            <a href="/stocks/{{ symbol }}" class="list-group-item list-group-item-action">{{ symbol }}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>FinGPT Việt Nam</h5>
+                    <p>Công cụ phân tích sentiment cổ phiếu Việt Nam sử dụng trí tuệ nhân tạo</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Liên kết</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/" class="text-white">Trang chủ</a></li>
+                        <li><a href="/stocks" class="text-white">Cổ phiếu</a></li>
+                        <li><a href="/sentiment" class="text-white">Phân tích Sentiment</a></li>
+                        <li><a href="/about" class="text-white">Giới thiệu</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Nguồn dữ liệu</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="https://cafef.vn" class="text-white" target="_blank">CafeF</a></li>
+                        <li><a href="https://iboard.ssi.com.vn" class="text-white" target="_blank">SSI iBoard</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p class="mb-0">&copy; 2025 FinGPT Việt Nam. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize stock sentiment chart
+            const sentimentCtx = document.getElementById('stockSentimentChart');
+            
+            if (sentimentCtx) {
+                const stockSentimentChart = new Chart(sentimentCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Tích cực', 'Trung tính', 'Tiêu cực'],
+                        datasets: [{
+                            data: [
+                                {{ sentiment.positive_news }}, 
+                                {{ sentiment.neutral_news }}, 
+                                {{ sentiment.negative_news }}
+                            ],
+                            backgroundColor: [
+                                '#198754',  // success
+                                '#ffc107',  // warning
+                                '#dc3545'   // danger
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw || 0;
+                                        const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
+                                        const percentage = Math.round((value / total) * 100);
+                                        return `${label}: ${percentage}% (${value})`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
